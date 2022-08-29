@@ -9,7 +9,10 @@
     "css": "npx tailwindcss -i ./tailwind.css -o ./src/assets/css/main.css --watch"
   },
   "dependencies": {
+    "@animxyz/core": "^0.6.6",
+    "@animxyz/vue3": "^0.6.7",
     "animate.css": "^4.1.1",
+    "axios": "^0.27.2",
     "core-js": "^3.8.3",
     "localforage": "^1.10.0",
     "pinia": "^2.0.21",
