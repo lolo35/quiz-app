@@ -5,7 +5,11 @@ module.exports = {
     './src/**/*.{vue,js,ts,html}'
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        autblue: "#0078D7"
+      }
+    },
   },
   plugins: [
     require('tailwindcss-debug-screens')

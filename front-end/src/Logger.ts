@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+//eslint-disable-next-line
 const logger = async (url: string, error:any) => {
     try {
         const formData = new FormData();

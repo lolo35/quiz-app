@@ -7,6 +7,8 @@ export const mainStore = defineStore({
         return {
             showUserModal: false,
             url: "",
+            currentQuestion: 0,
+            questions: []
         }
     },
     actions: {
@@ -18,6 +20,9 @@ export const mainStore = defineStore({
         },
         setURL(value: string){
             this.$state.url = value;
+        },
+        incrementCurrentQuestion() {
+            this.$state.currentQuestion++;
         }
     }
 });

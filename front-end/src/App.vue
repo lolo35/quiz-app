@@ -1,12 +1,20 @@
 <template>
+  <NavbarComponentVue></NavbarComponentVue>
   <router-view/>
+  <background-component-vue></background-component-vue>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { onMounted } from 'vue';
 import { mainStore } from '@/store/main.store';
+import BackgroundComponentVue from './components/Modal/BackgroundComponent.vue';
+import NavbarComponentVue from './components/Navigation/NavbarComponent.vue';
 
 export default defineComponent({
+  components: {
+    BackgroundComponentVue,
+    NavbarComponentVue,
+  },
   setup() {
     const store = mainStore();
     onMounted(() => {
