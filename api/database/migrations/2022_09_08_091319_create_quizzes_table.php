@@ -13,12 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create("started_quizes", function (Blueprint $table) {
+        Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
-            $table->integer('quiz_id');
-            $table->integer('started_by');
-            $table->boolean('finished');
-            $table->string('questions');
+            $table->boolean('active');
+            $table->integer("passing_grade");
+            $table->boolean('random')->default(0);
             $table->timestamps();
         });
     }
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists("started_quizes");
+        Schema::dropIfExists('quizzes');
     }
 };

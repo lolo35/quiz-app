@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class StartedQuizes extends Model
+class Quiz extends Model
 {
     use HasFactory;
-    protected $table = "started_quizes";
-    protected $fillable = ['quiz_id', 'started_by', 'finished', 'questions'];
+    protected $table = "quizzes";
+    protected $fillable = ['active', 'passing_grade'];
     protected $hidden = [];
 }

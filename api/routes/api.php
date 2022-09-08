@@ -34,5 +34,7 @@ Route::group(['prefix' => 'frontend'], function () {
         Route::get('/questions', [QuizController::class, 'generateQuiz']);
         Route::get('/answers', [QuizController::class, 'fetchAnswer']);
         Route::post('/answer', [QuizController::class, 'submitAnswer']);
+        Route::post('/finish', [QuizController::class, 'finishQuiz']);
+        Route::get('/result', [QuizController::class, 'calculateResult']);
     });
 });

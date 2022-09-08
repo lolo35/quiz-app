@@ -4,14 +4,14 @@
   </div> -->
   <div class="fixed top-0 bottom-0 left-0 right-0">
     <div class="flex flex-col w-full h-full items-center justify-center space-y-5">
-      <router-link to="/quiz" class="bg-sky-500 px-3 py-2 text-white rounded shadow-lg w-2/3 hover:bg-sky-600 focus:bg-sky-600 flex flex-row justify-center items-center space-x-2">
+      <router-link to="/check" class="bg-sky-500 px-3 py-2 text-white rounded shadow-lg w-2/3 hover:bg-sky-600 focus:bg-sky-600 flex flex-row justify-center items-center space-x-2">
         <i class="fa-solid fa-play"></i>
         <span>Start Quiz</span>
       </router-link>
-      <button class="bg-yellow-500 text-white px-3 py-2 rounded shadow-lg w-2/3 hover:bg-yellow-600 focus:bg-yellow-600">
+      <router-link to="/score" class="bg-yellow-500 text-white px-3 py-2 rounded shadow-lg w-2/3 hover:bg-yellow-600 focus:bg-yellow-600 text-center">
         <i class="fa-solid fa-flag-checkered"></i>
         Verifica rezultatele
-      </button>
+      </router-link>
     </div>
   </div>
   <user-modal-vue v-if="showUserModal"></user-modal-vue>

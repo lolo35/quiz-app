@@ -4,11 +4,11 @@
         <div class="flex flex-row">
             <h3 class="text-lg font-bold">Intrebarea #{{currentQuestion + 1}}</h3>
         </div>
-        <progress-bar-component-vue :total-questions="questions.length" :current-question="currentQuestion"></progress-bar-component-vue>
-        <div class="flex flex-row px-2">
+        <progress-bar-component-vue v-if="currentQuestion + 1 < questions.length" :total-questions="questions.length" :current-question="currentQuestion"></progress-bar-component-vue>
+        <div class="flex flex-row px-2" v-if="currentQuestion < questions.length">
             <p class="font-semibold text-gray-500 italic">{{ question.question }}</p>
         </div>
-        <div class="flex flex-col px-2 space-y-2 mt-3">
+        <div class="flex flex-col px-2 space-y-2 mt-3" v-if="showAnswers">
             <!-- <div v-for="answer in answers" :key="answer.id" >
                 {{ answer.answer }}
             </div> -->
@@ -23,7 +23,8 @@
 </template>
 <script lang="ts">
 /**Vue stuff */
-import { defineComponent, PropType, onMounted, ref } from 'vue';
+import { defineComponent, PropType, onMounted, ref, watch } from 'vue';
+import { useRouter }  from 'vue-router';
 /** models/interfaces */
 import { Questions } from '@/models/questions.model';
 import { Answer } from '@/models/answers.model';
@@ -62,14 +63,24 @@ export default defineComponent({
         const answers = ref<Answer[]>([]);
         const loading = ref<boolean>(false);
         const { submited_answers } = storeToRefs(submitedAnswersStore);
+        const router = useRouter();
+        const showAnswers = ref<boolean>(false);
+
+        watch(() => props.question, () => {
+            if(currentQuestion.value < questions.value.length) {
+                fetchAnswers();
+            }
+        });
 
         const fetchAnswers = async () => {
             try {
                 loading.value = true;
+                showAnswers.value = false;
                 const response = await axios.get(`${url.value}frontend/quiz/answers?question_id=${props.question.id}`);
                 if(process.env.NODE_ENV === "development") console.log(response.data);
                 if(response.data.success) {
                     answers.value = response.data.answers;
+                    showAnswers.value = true;
                 }
                 loading.value = false;
             } catch (exception) {
@@ -83,24 +94,54 @@ export default defineComponent({
             }
         }
 
+        const submitAnswer = async (user:User, quiz_id:StartedQuizes) => {
+            try {
+                const formData = new FormData();
+                formData.append('user_id', user.id as unknown as string);
+                formData.append('question_id', props.question.id as unknown as string);
+                formData.append('quiz_id', quiz_id?.id as unknown as string);
+                const answers = JSON.stringify(submited_answers.value);
+                formData.append('answers', answers);
+                //console.log(answers)
+                const response = await axios.post(`${url.value}frontend/quiz/answer`, formData, { headers: {"Content-type": "application/x-www-form-urlencoded"}});
+                if(process.env.NODE_ENV === "development") console.log(response.data);
+                if(response.data.success) {
+                    store.incrementCurrentQuestion();
+                    submitedAnswersStore.$reset();
+                }
+            } catch (exception) {
+                if(exception instanceof Error) {
+                    logger(url.value, exception.message);
+                    if(process.env.NODE_ENV === "development") throw new Error(exception.message);
+                }
+            }
+        }
+
         const nextQuestion = async () => {
             try {
-                if(currentQuestion.value < answers.value.length) {
-                    const user = await localforage.getItem<User>('user');
-                    const quiz_id = await localforage.getItem<StartedQuizes>(`quiz_id`);
-                    if(user) {
+                const user = await localforage.getItem<User>('user');
+                const quiz_id = await localforage.getItem<StartedQuizes>(`quiz_id`);
+                if(currentQuestion.value < questions.value.length - 1) {
+                    
+                    if(user && quiz_id) {
+                        submitAnswer(user, quiz_id);
+                    }
+                } else {
+                    //console.log(`mark quiz as finished`);
+                    if(quiz_id && user) {
+                        submitAnswer(user, quiz_id);
                         const formData = new FormData();
-                        formData.append('user_id', user.id as unknown as string);
-                        formData.append('question_id', props.question.id as unknown as string);
-                        formData.append('quiz_id', quiz_id?.id as unknown as string);
-                        const answers = JSON.stringify(submited_answers.value);
-                        formData.append('answers', answers);
-                        console.log(answers);
+                        formData.append(`quiz_id`, quiz_id.id as unknown as string);
+                        formData.append(`user_id`, user?.id as unknown as string);
 
-                        const response = await axios.post(`${url.value}frontend/quiz/answer`, formData, { headers: {"Content-type": "application/x-www-form-urlencoded"}});
-                        if(process.env.NODE_ENV === "development") console.log(response.data);
-                        store.incrementCurrentQuestion();
-                        submitedAnswersStore.$reset();
+                        const response = await axios.post(`${url.value}frontend/quiz/finish`, formData, { headers: {"Content-type": "application/x-www-form-urlencoded"}});
+                        if(process.env.NODE_ENV === "development") console.log(`quiz finish`, response.data);
+                        if(response.data.success) {
+                            router.push('/score')
+                        }
+                        if(response.data.success) {
+                            await localforage.setItem(`quiz_id`, response.data.data);
+                        }
                     }
                 }
             } catch (exception) {
@@ -122,6 +163,7 @@ export default defineComponent({
             currentQuestion,
             nextQuestion,
             questions,
+            showAnswers,
         }
     }
 });
