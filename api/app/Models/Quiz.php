@@ -9,6 +9,6 @@ class Quiz extends Model
 {
     use HasFactory;
     protected $table = "quizzes";
-    protected $fillable = ['active', 'passing_grade'];
+    protected $fillable = ['active', 'passing_grade', 'random', 'win_text', 'loose_text', 'repeatable'];
     protected $hidden = [];
 }

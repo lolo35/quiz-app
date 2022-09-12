@@ -38,3 +38,10 @@ Route::group(['prefix' => 'frontend'], function () {
         Route::get('/result', [QuizController::class, 'calculateResult']);
     });
 });
+
+Route::group(['prefix' => "admin"], function () {
+    Route::group(['prefix' => "score"], function () {
+        Route::get('/result', [QuizController::class, 'userResult']);
+        Route::post('/reward_user', [QuizController::class, 'rewardUser']);
+    });
+});

@@ -11,6 +11,8 @@ use App\Models\QuizAnswers;
 use App\Models\SubmittedAnswers;
 use App\Models\StartedQuizes;
 use App\Models\Quiz;
+use App\Models\QuizUsers;
+use App\Models\Rewarded;
 
 class QuizController extends Controller
 {
@@ -66,7 +68,7 @@ class QuizController extends Controller
                 $start->questions = $question_ids;
                 $start->save();
 
-                return response()->json(['success' => true, 'questions' => $questions, 'quiz_id' => $start], 200);
+                return response()->json(['success' => true, 'questions' => $questions, 'quiz_id' => $start, 'quiz_data' => $quiz], 200);
             }
         } catch (Exception $e) {
             Log::error("Error generating quiz", ['error' => $e->getMessage()]);
@@ -137,18 +139,40 @@ class QuizController extends Controller
     public function calculateResult(Request $request) {
         try {
             $this->validate($request, [
+                'started_quiz_id' => "required|integer",
                 'quiz_id' => "required|integer"
             ]);
 
-            $data = SubmittedAnswers::join('quiz_answers', 'submitted_answers.answer_id', '=', 'quiz_answers.id')
-                ->leftjoin('questions', 'submitted_answers.question_id', '=', 'questions.id')
-                ->where('submitted_answers.quiz_id', '=', $request->quiz_id)
-                //->where('quiz_answers.correct', '=', 'true')
-                ->get()
-                ->toArray();
+            $result = $this->calcResult($request->started_quiz_id);
             
+            if($result['success']) {
+                return response()->json(
+                    [
+                        'success' => true, 
+                        'points' => $result['points'], 
+                        'total' => $result['total'], 
+                        'percent' => $result['percent'], 
+                        'passing' => $result['passing']
+                    ], 200);
+            }
+            return response()->json(['success' => false, 'error' => $result['error']], 200);
+        } catch (Exception $e) {
+            Log::error("Error calculating win percent", ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 200);
+        }
+    }
+
+    private function calcResult(int $quiz_id):array {
+        try {
+            $data = SubmittedAnswers::join('quiz_answers', 'submitted_answers.answer_id', '=', 'quiz_answers.id')
+            ->leftjoin('questions', 'submitted_answers.question_id', '=', 'questions.id')
+            ->where('submitted_answers.quiz_id', '=', $quiz_id)
+            //->where('quiz_answers.correct', '=', 'true')
+            ->get()
+            ->toArray();
+        
             $passing = Quiz::join('started_quizes', 'started_quizes.quiz_id', '=', 'quizzes.id')
-                ->where('started_quizes.id', '=', $request->quiz_id)
+                ->where('started_quizes.id', '=', $quiz_id)
                 ->first();
             if($passing) {
                 $passing = $passing->passing_grade;
@@ -166,9 +190,51 @@ class QuizController extends Controller
             }
 
             $percent = round(($points / $total) * 100);
-            return response()->json(['success' => true, 'points' => $points, 'total' => $total, 'percent' => $percent, 'passing' => (int)$passing], 200);
+            return ['success' => true, 'points' => $points, 'total' =>  $total, 'percent' => $percent, 'passing' => (int)$passing];
         } catch (Exception $e) {
-            Log::error("Error calculating win percent", ['error' => $e->getMessage()]);
+            Log::error("Error calculating result (private function)", ['error' => $e->getMessage()]);
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    public function userResult(Request $request) {
+        try {
+            $this->validate($request, [
+                'userid' => "required|integer"
+            ]);
+            
+            $quiz_id = StartedQuizes::where('started_by', '=', $request->userid)->where('finished', '=', true)->orderBy('id', 'desc')->limit(1)->first();
+            //return response()->json(['success' => true, 'test' => $quiz_id], 200);
+
+            $result = $this->calcResult($quiz_id->id);
+
+            $user = QuizUsers::where('id', '=', $request->userid)->first();
+            $reward = new Rewarded();
+            $rewarded = $reward->checkRewardState($request->userid);
+            if($rewarded['success']) {
+                $rewarded = $rewarded['data'];
+            }
+
+            return response()->json(['success' => true, 'result' => $result, 'user' => $user, 'reward_state' => $rewarded, 'quiz_id' => $quiz_id->id], 200);
+        } catch (Exception $e) {
+            Log::error("Error fetching user result", ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 200);
+        }
+    }
+
+    public function rewardUser(Request $request) {
+        try {
+            $this->validate($request, [
+                'user_id' => "required|integer",
+                'quiz_id' => "required|integer"
+            ]);
+
+            $reward = new Rewarded();
+            $rewarded = $reward->insert($request->user_id, $request->quiz_id);
+
+            return response()->json(['success' => true], 200);
+        } catch (Exception $e) {
+            Log::error("Error rewarding user", ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'error' => $e->getMessage()], 200);
         }
     }

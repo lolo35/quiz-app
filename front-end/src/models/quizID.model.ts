@@ -1,5 +1,6 @@
 export interface QuizID {
     id: number,
+    quiz_id: number,
     started_by: string,
     finished: boolean,
     questions: string,

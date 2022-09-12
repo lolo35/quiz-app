@@ -18,6 +18,9 @@ return new class extends Migration
             $table->boolean('active');
             $table->integer("passing_grade");
             $table->boolean('random')->default(0);
+            $table->string('win_text')->nullable();
+            $table->string('loose_text')->nullable();
+            $table->boolean('repeatable')->default(false);
             $table->timestamps();
         });
     }

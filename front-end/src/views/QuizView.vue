@@ -63,6 +63,7 @@ export default defineComponent({
                         questions.value = response.data.questions;
                         if(!quiz_id) {
                             await localforage.setItem(`quiz_id`, response.data.quiz_id);
+                            await localforage.setItem(`quiz_data`, response.data.quiz_data);
                         }
                         dataLoaded.value = true;
                     }

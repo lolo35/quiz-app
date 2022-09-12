@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col w-full h-screen items-center justify-center">
         <div class="flex flex-col bg-slate-300 px-3 py-2 rounded w-2/3 items-center justify-center" 
-            :class="{'win-background': max >= passingGrade, 'loose-background': max < passingGrade}">
+            :class="{'win-background': max >= passingGrade && !loading, 'loose-background': max < passingGrade && !loading}">
             <div class="flex flex-row items-start w-full">
                 <p class="text-xs font-bold">#{{ user?.id }}</p>
             </div>
@@ -27,16 +27,23 @@
                     <span>%</span>
                 </h2>
             </div>
-            <div class="flex flex-row bg-green-300 px-3 py-2 rounded w-full justify-center" v-if="max >= passingGrade">
-                <h3 class="text-lg font-bold text-green-800 animate-pulse">Felicitari! Ai castigat!!</h3>
-            </div>
-            <div class="flex flex-col space-y-2 w-full" v-if="max < passingGrade">
-                <div class="flex flex-row bg-red-200 px-3 py-2 rounded w-full justify-center">
-                    <h3 class="text-lg font-bold text-red-500">
-                        Ne pare rau!
+            <div class="flex flex-col" v-if="max >= passingGrade && !loading">
+                <div class="flex flex-row bg-green-300 px-3 py-2 rounded w-full justify-center">
+                    <h3 class="text-lg font-bold text-green-800 animate-pulse">Felicitari! Ai castigat!!</h3>
+                </div>
+                <div class="flex flex-row items-center justify-center">
+                    <h3 class="font-bold text-sm">
+                        {{ quizData?.win_text }}
                     </h3>
                 </div>
-                <button @click="startAgain()" class="bg-blue-500 px-3 py-2 text-white rounded text-xs w-full">
+            </div>
+            <div class="flex flex-col space-y-2 w-full" v-if="max < passingGrade && !loading">
+                <div class="flex flex-row bg-red-200 px-3 py-2 rounded w-full justify-center">
+                    <h3 class="text-lg font-bold text-red-500">
+                        {{ quizData?.loose_text }}
+                    </h3>
+                </div>
+                <button @click="startAgain()" v-if="quizData?.repeatable" class="bg-blue-500 px-3 py-2 text-white rounded text-xs w-full">
                     Incearca-ti norocul din nou!
                 </button>
             </div>
@@ -55,6 +62,7 @@ import axios from 'axios';
 import party from 'party-js';
 import { useRouter } from 'vue-router';
 import { User } from '@/models/user.model';
+import { QuizDataInterface } from '@/models/quizData.model';
 
 export default defineComponent({
     setup () {
@@ -66,10 +74,17 @@ export default defineComponent({
         const router = useRouter();
         const showCircle = ref<boolean>(false);
         const user = ref<User>();
+        const loading = ref<boolean>(true);
+        const quizData = ref<QuizDataInterface | null>(null);
 
         const fetchUser = async () => {
             try {
                 const userQuery = await localforage.getItem<User>(`user`);
+                const quiz_data = await localforage.getItem<QuizDataInterface>(`quiz_data`);
+                if(quiz_data) {
+                    quizData.value = quiz_data;
+                }
+
                 if(userQuery) {
                     user.value = userQuery;
                 }
@@ -105,6 +120,9 @@ export default defineComponent({
         const startAgain = async () => {
             try {
                 await localforage.removeItem(`quiz_id`);
+                const tempUrl = url.value;
+                store.$reset();
+                url.value = tempUrl;
                 router.push('/quiz');
             } catch (exception) {
                 if(exception instanceof Error) {
@@ -116,9 +134,10 @@ export default defineComponent({
 
         const fetchPoints = async () => {
             try {
+                loading.value = true;
                 const quizData = await localforage.getItem<QuizID>(`quiz_id`);
                 if(quizData) {
-                    const response = await axios.get<QuizResult>(`${url.value}frontend/quiz/result?quiz_id=${quizData.id}`);
+                    const response = await axios.get<QuizResult>(`${url.value}frontend/quiz/result?started_quiz_id=${quizData.id}&quiz_id=${quizData.quiz_id}`);
                     if(process.env.NODE_ENV === "development") console.log(response.data);
                     if(response.data.success) {
                         max.value = response.data.percent;
@@ -140,6 +159,8 @@ export default defineComponent({
                     if(process.env.NODE_ENV === "development") throw new Error(exception.message);
                     logger(url.value, exception.message);
                 }
+            } finally {
+                loading.value = false;
             }
         }
 
@@ -154,6 +175,8 @@ export default defineComponent({
             passingGrade,
             startAgain,
             user,
+            loading,
+            quizData
         }
     }
 })
