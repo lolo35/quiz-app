@@ -18,6 +18,7 @@ export default defineComponent({
   setup() {
     const store = mainStore();
     onMounted(() => {
+      store.setURL("http://18.195.236.148/api/");
       if(process.env.NODE_ENV === "development") {
         document.body.classList.add('debug-screens');
         store.setURL("http://localhost:8000/api/");
