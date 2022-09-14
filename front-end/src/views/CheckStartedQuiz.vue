@@ -22,6 +22,7 @@ import { mainStore } from '@/store/main.store';
 import { storeToRefs } from 'pinia';
 import localforage from 'localforage';
 import { StartedQuizes } from '@/models/startedQuizes.models';
+import { QuizDataInterface } from '@/models/quizData.model';
 export default defineComponent({
     setup() {
         const store = mainStore();
@@ -32,11 +33,17 @@ export default defineComponent({
         const checkForFinishedQuiz = async () => {
             try {
                 const quiz_id = await localforage.getItem<StartedQuizes>(`quiz_id`);
-                if(quiz_id) {
-                    if(quiz_id.finished) {
+                const quizType = await localforage.getItem<QuizDataInterface>(`quiz_data`);
+                
+                if(quiz_id && quizType) {
+                    const isRepeatable = Boolean(parseInt(quizType.repeatable));
+                    if(quiz_id.finished && isRepeatable) {
                         console.log(`this quiz is finished`);
                         quizFinished.value = true;
                         return 0;
+                    }
+                    if(quiz_id.finished && !isRepeatable) {
+                        router.push('/score');
                     }
                 }
                 router.push('/quiz');

@@ -29,6 +29,7 @@ import logger from '@/Logger';
 import LoadingComponentVue from '@/components/LoadingComponent.vue';
 import QuestionComponentVue from '@/components/Questions/QuestionComponent.vue';
 import { useRouter } from 'vue-router';
+import { QuizID } from '@/models/quizID.model';
 
 export default defineComponent({
     components: {
@@ -43,6 +44,23 @@ export default defineComponent({
         //const currentQuestion = ref<number>(0);
         const dataLoaded = ref<boolean>(false);
         const router = useRouter();
+
+        const checkForComplete = async () => {
+            try {
+                const quiz = await localforage.getItem<QuizID>(`quiz_id`);
+                if(quiz) {
+                    if(quiz.finished) {
+                        router.push('/score');
+                        return;
+                    }
+                    fetchQuestions();
+                }
+            } catch (exception) {
+                if(exception instanceof Error) {
+                    if(process.env.NODE_ENV === "development") throw new Error(exception.message);
+                }
+            }
+        }
 
         const fetchQuestions = async () => {
             try {
@@ -91,7 +109,7 @@ export default defineComponent({
         }
 
         onMounted(() => {
-            fetchQuestions();
+            checkForComplete();
         });
 
         return {

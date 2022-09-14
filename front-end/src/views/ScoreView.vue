@@ -105,7 +105,7 @@ export default defineComponent({
                 
                 if(circle) {
                     const offset = 440 - (440 * dashOffset) / 100;
-                    console.log(offset);
+                    //console.log(offset);
                     circle.style.strokeDashoffset = offset as unknown as string;
                 }
                 if(dashOffset == max.value) {

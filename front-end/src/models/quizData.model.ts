@@ -5,7 +5,7 @@ export interface QuizDataInterface {
     random: boolean,
     win_text: string,
     loose_text: string,
-    repeatable: false,
-    created_at: false,
-    updated_at: false,
+    repeatable: string,
+    created_at: string,
+    updated_at: string,
 }

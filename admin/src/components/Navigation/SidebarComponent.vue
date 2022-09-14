@@ -16,6 +16,11 @@
                     <i class="fa-solid fa-ranking-star fa-2x"></i>
                 </router-link>
             </div>
+            <div class="flex flex-row items-center justify-center">
+                <router-link  to="/questions" title="Intrebari" :class="activeRoute === 'Questions' ? routeActiveClass : routeInactiveClass">
+                    <i class="fa-solid fa-circle-question fa-2x"></i>
+                </router-link>
+            </div>
         </div>
     </div>
 </template>
