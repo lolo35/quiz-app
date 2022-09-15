@@ -53,8 +53,8 @@ export default defineComponent({
                         router.push('/score');
                         return;
                     }
-                    fetchQuestions();
                 }
+                fetchQuestions();
             } catch (exception) {
                 if(exception instanceof Error) {
                     if(process.env.NODE_ENV === "development") throw new Error(exception.message);
